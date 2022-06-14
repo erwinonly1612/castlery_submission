@@ -4,7 +4,7 @@ from flask import request
 
 from . import create_app, database
 from .models import Employees
-
+import pandas as pd
 app = create_app()
 
 
@@ -68,3 +68,20 @@ def edit(employee_id):
     new_town = data['town']
     database.edit_instance(Employees, id=employee_id, employee=new_employee, gender=new_gender, age=new_age, salary=new_salary, town=new_town)
     return json.dumps("Edited"), 200
+    
+@app.route('/employee/import_csv', methods=['GET'])
+def import_csv():
+    employees_df = pd.read_csv('./src/example/employees.csv')
+    employees_df['id'] = employees_df['id'].astype('int64')
+    employees_df['age'] = employees_df['age'].astype('int64')
+    employees_df['salary'] = employees_df['salary'].astype('float')
+
+    for index,data in employees_df.iterrows():
+        employee = data['employee']
+        gender = data['gender']
+        age = data['age']
+        salary = data['salary']
+        town = data['town']
+        database.add_instance(Employees, employee=employee, gender=gender, age=age, salary=salary, town=town)
+
+    return json.dumps("csv imported"), 200
